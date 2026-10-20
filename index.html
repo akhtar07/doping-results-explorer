@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gate-Doping Results Explorer</title>
+<meta name="description" content="Interactive results of three first-principles studies of carrier doping, chemical bonding and lattice dynamics in two-dimensional carbides, MXenes, transition-metal dichalcogenides and heterobilayers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <div class="brand-title">Gate-Doping Results Explorer</div>
+        <div class="brand-sub">Bonding vs. lattice dynamics in doped 2D materials</div>
+      </div>
+    </div>
+    <button id="theme" class="ghost" type="button" aria-label="Toggle colour theme">◐</button>
+  </div>
+  <nav class="wrap tabs" role="tablist">
+    <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-tab="p1a">Paper 1a · Carbides &amp; MXenes</button>
+    <button role="tab" data-tab="p1b">Paper 1b · TMD monolayers</button>
+    <button role="tab" data-tab="p2">Paper 2 · Heterobilayers</button>
+    <button role="tab" data-tab="figs">Figures</button>
+    <button role="tab" data-tab="about">Methods &amp; data</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section id="overview" class="panel active"></section>
+  <section id="p1a" class="panel"></section>
+  <section id="p1b" class="panel"></section>
+  <section id="p2" class="panel"></section>
+  <section id="figs" class="panel"></section>
+  <section id="about" class="panel"></section>
+  <div id="loading" class="muted">Loading results…</div>
+</main>
+
+<div id="lightbox" hidden>
+  <button class="ghost close" type="button" aria-label="Close">✕</button>
+  <img alt="">
+  <div class="cap"></div>
+</div>
+
+<footer class="wrap foot muted">
+  Md Faiz Akhtar, Vardhman Dwivedi and Somnath Bhowmick, Department of Materials Science and Engineering, IIT Kanpur.
+  All values are taken directly from the DFT (VASP) and LOBSTER analysis outputs behind each manuscript.
+  The manuscripts are in preparation, so please cite the published versions once they appear.
+</footer>
+</body>
+</html>
