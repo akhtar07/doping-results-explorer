@@ -138,6 +138,11 @@ td.weak { color: var(--bad); } td.strong { color: var(--ok); }
 .pill.canonical { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
 .pill.anti { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
 .pill.same { background: color-mix(in srgb, var(--struct) 22%, transparent); color: var(--ink-2); }
+/* all-bonds tables: most / least affected shell, weak contacts */
+tr.most td { font-weight: 600; background: color-mix(in srgb, var(--ok) 8%, transparent); }
+tr.least td { font-weight: 600; background: color-mix(in srgb, var(--struct) 10%, transparent); }
+tr.contact td { color: var(--muted); font-style: italic; }
+tr.contact td.weak, tr.contact td.strong { color: var(--muted); }
 
 /* gallery */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }

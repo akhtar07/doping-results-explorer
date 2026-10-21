@@ -90,12 +90,29 @@ for p in ("part1", "part3", "part4"):
 bonds1a = bond_rows(sum((ps["bonds"][p] for p in ("part1", "part3", "part4")), []),
                     lambda s: fam[s])
 ab1a = load(A, "1a/alpha_beta.json")
-kind = {(b["system"], b["bond"]): b["kind"] for b in ab1a["bond_records"]}
+METALS = {"Ti", "V", "Nb", "Mo", "Sc", "W", "Hf", "Zr", "Ta", "Pt", "M"}
+
+
+def bondkind(bond):
+    """M-M / M-X / X-X from the element names (generic "M-C" style included);
+    O-H is classed M-X, as in the original alpha_beta records"""
+    a, b = bond.split("(")[0].split("-")
+    if {a, b} == {"O", "H"}:
+        return "M-X"
+    return {2: "M-M", 1: "M-X", 0: "X-X"}[(a in METALS) + (b in METALS)]
+
+
+# alpha_beta.json may key bonds by pair ("C-Ti") or by shell ("C-Ti(1)"); all
+# shells of one pair share the same kind
+kind = {}
+for b in ab1a["bond_records"]:
+    kind[(b["system"], b["bond"])] = b["kind"]
+    kind.setdefault((b["system"], b["bond"].split("(")[0]), b["kind"])
 # paper_stats stores the bond length, not the multiplicity, in "mult" for the
 # terminated carbides; take [icohp, dist, mult] from m2c_terminated instead
 term = load(A, "m2c_terminated.json")["D"]
 for b in bonds1a:
-    b["kind"] = kind[(b["system"], b["bond"])]
+    b["kind"] = kind.get((b["system"], b["bond"])) or bondkind(b["bond"])
     if b["system"] in term:
         b["mult"] = term[b["system"]]["full_undoped"]["icohp"][b["bond"]][2]
 shift1a = {}
@@ -183,6 +200,118 @@ paper2 = {"pairs": ["MoS2-WS2", "MoSe2-WSe2", "MoTe2-WTe2"],
 shear = os.path.join(H, "stage6_shear/shear.json")
 if os.path.exists(shear):
     paper2["shear"] = load(shear)
+
+# ---------------------------------------------------------------- all bonds (1a, 1b)
+# every symmetry-distinct bond shell LOBSTER computed (all_bonds.py) and the
+# mode-resolved, stretch-weighted bond-informed sign test (mode_bond_test.py)
+FAMNAME = {"Ti3C2Tx MXene": "Ti₃C₂Tₓ MXene", "terminated M2CTx": "terminated M₂CTₓ",
+           "bare M2C": "bare M₂C", "2H semiconductor": "2H-sc",
+           "1T semiconductor": "1T-sc", "2H metal": "2H-metal"}
+AB = load(A, "all_bonds/all_bonds.json")
+MT = load(A, "all_bonds/mode_bond_test.json")
+
+
+def sub3(d):
+    return None if d is None else {k: d[k] for k in ("total", "elec", "struct")}
+
+
+def allbonds(paper):
+    out = {}
+    for s, v in AB.items():
+        if v["paper"] != paper:
+            continue
+        out[s] = {"family": FAMNAME[v["family"]], "most": v["most_affected"],
+                  "least": v["least_affected"],
+                  "bonds": [{"shell": b["shell"], "pair": b["pair"], "d": b["d"], "dz": b["dz"],
+                             "n": b["n"], "icohp0": b["full_undoped"], "e": sub3(b["de"]),
+                             "h": sub3(b["dh"]), "dir": b["direction"],
+                             "weak": b["weak_contact"], "resp": b["response"],
+                             "absresp": b["abs_response"]} for b in v["bonds"]]}
+    return out
+
+
+def modetest(paper):
+    summ = {}
+    for g, v in MT["summary"].items():
+        pp, fam = [x.strip() for x in g.split("|")]
+        if pp != paper:
+            continue
+        # p-values as strings: the global 5-decimal rounding would zero them
+        for c in v.values():
+            for o in (c, c["rel"], c["strong"]):
+                o["p"] = None if o["p"] is None else "%.2g" % o["p"]
+        summ[fam if fam == "ALL" else FAMNAME[fam]] = v
+    systems, modes = {}, []
+    for s, v in MT["systems"].items():
+        if v["paper"] != paper:
+            continue
+        rec = {"family": FAMNAME[v["family"]]}
+        for ch in ("total", "elec", "struct"):
+            st = [m[ch]["status"] for m in v["modes"]]
+            rec[ch] = [st.count("follow"), st.count("follow") + st.count("violate")]
+        systems[s] = rec
+        for m in v["modes"]:
+            modes.append({"system": s, "carrier": m["carrier"], "w0": m["w0"],
+                          "dom": m["dominant_bond"], "share": m["dominant_share"],
+                          **{ch: {"pred": m[ch]["pred"], "obs": m[ch]["obs"], "st": m[ch]["status"]}
+                             for ch in ("total", "elec", "struct")}})
+    return {"summary": summ, "systems": systems, "modes": modes}
+
+
+for paper, P_ in (("1a", paper1a), ("1b", paper1b)):
+    P_["allbonds"] = allbonds(paper)
+    P_["modetest"] = modetest(paper)
+
+# ---------------------------------------------------------------- Paper 2, stage 7
+# twelve bilayers: the three 2H heterobilayers (stage 5/6) plus three 3R
+# heterobilayers and six AA' homobilayers (stage 7, Rudra 98519)
+S7 = load(H, "stage7_extend/stage7.json")
+PC7 = load(H, "stage7_extend/pcohp.json")
+H2H = ["MoS2-WS2", "MoSe2-WSe2", "MoTe2-WTe2"]
+R3 = ["MoS2-WS2-3R", "MoSe2-WSe2-3R", "MoTe2-WTe2-3R"]
+HOMO = [m + x + "2-" + m + x + "2" for x in ("S", "Se", "Te") for m in ("Mo", "W")]
+STACK = {**{s: "2H" for s in H2H}, **{s: "3R" for s in R3}, **{s: "AA'" for s in HOMO}}
+paper2["pairs"] = H2H + R3 + HOMO
+paper2["stack"] = STACK
+for row in k2:
+    row["stack"] = "2H"
+for key, v in S7["k"].items():
+    s, vac, q = key.rsplit("_", 2)
+    k2.append({"pair": s, "vac": int(vac[3:]), "q": q, "n": DOP[q], "k": v["k"],
+               "kerr": v["kerr"], "w": v["w"], "stack": STACK[s]})
+for key, v in S7["bond"].items():
+    s, vac = key.rsplit("_", 1)
+    if s in H2H:
+        continue                       # stage-5 rows already present (reproduced exactly)
+    for q, d in (("qh2", v["dh"]), ("q0", 0.0), ("qe2", v["de"])):
+        sp = {"qh2": v["spill_h"], "q0": v["spill"], "qe2": v["spill_e"]}[q]
+        bond2.append({"pair": s, "vac": int(vac[3:]), "q": q, "n": DOP[q],
+                      "contact": v["contact"], "icohp": v["icohp"] + d,
+                      "nbond": v["n"], "spill": sp})
+shear_rows = []
+SH = paper2.pop("shear") or {}
+for key, v in list(SH.items()) + list(S7["s"].items()):
+    s, vac, q = key.rsplit("_", 2)
+    shear_rows.append({"pair": s, "vac": int(vac[3:]), "q": q, "n": DOP[q], "k": v["k"],
+                       "kerr": v["kerr"], "w": v["w"], "stack": STACK[s]})
+paper2["shear"] = {"rows": shear_rows}
+paper2["relax7"] = S7["relax"]
+paper2["allbonds"] = S7["allbonds"]
+paper2["charge"] = []
+for key, v in S7["charge"].items():
+    s, vac, q = key.rsplit("_", 2)
+    paper2["charge"].append({"pair": s, "vac": int(vac[3:]), "q": q, "n": DOP[q],
+                             "bottom": v["bottom"], "top": v["top"], "vacuum": v["vacuum"],
+                             "bm": v["bottom_metal"], "tm": v["top_metal"],
+                             "z": v["profile_z"], "drho": v["profile"]})
+paper2["pcohp"] = {}
+for s, V in PC7.items():
+    for vac, Q in V.items():
+        z = Q["q0"]
+        paper2["pcohp"]["%s_%s" % (s, vac)] = {
+            "gap": z["gap"], "edge": z["edge_int"], "edge_pz": z["edge_int_pz"],
+            "E": z["E"], "mcohp": z["mcohp"], "mcohp_pz": z["mcohp_pz"],
+            "icohp": {q: Q[q]["icohp"] for q in Q}}
 
 # ---------------------------------------------------------------- figures
 figs = {}
