@@ -166,8 +166,11 @@ const FIGCAP = {
   fig5_dk_dicohp: "Pair stiffness vs bond strength",
   fig1_series: "Interlayer ICOHP across the series",
   fig2_jellium: "Vacuum test of jellium-sensitive observables",
-  fig3_breathing: "Layer-breathing force constant and frequency vs doping",
-  fig4_bond_vs_mode: "Interlayer bond vs breathing mode",
+  fig3_breathing: "Layer-breathing and shear force constants and frequencies vs doping",
+  fig4_bond_vs_mode: "Interlayer bond strengthening vs breathing and shear softening",
+  fig5_charge_cohp: "Where the doped charge resides, and the band-edge interlayer COHP",
+  figS1_charge_all: "Doped-charge profiles Δρ(z) of all twelve bilayers at both vacuum widths",
+  figS_allbonds_1b: "Every bond of the TMDs: full and band-filling ΔICOHP under electrons vs holes, and canonical/anti class counts by bond type (metal–ligand canonical in every system)",
 };
 function gallery(parent, paper) {
   const g = h("div", { class: "gallery" });
@@ -236,7 +239,7 @@ function renderOverview() {
     ["p1b", "Paper 1b", "Gate-doped transition-metal dichalcogenide monolayers: a universal metal–chalcogen bonding rule that does not carry over to the phonons",
       "2H semiconductors, 1T semiconductors and 2H metals. In all 12 systems the bond follows the rule, but band filling drives 92% of the mode shifts in directions the bond does not predict.",
       [`${B.systems.length} monolayers`, `${abCensus(B).shells} bond shells`, `${B.modes.length} optical modes`, "jellium spill-out test"]],
-    ["p2", "Paper 2", "Hole doping strengthens interlayer bonding yet softens the layer-breathing mode in transition-metal dichalcogenide heterobilayers",
+    ["p2", "Paper 2", "Hole doping strengthens interlayer bonding yet softens the interlayer modes of transition-metal dichalcogenide bilayers",
       "MoX₂/WX₂ heterobilayers in 2H and 3R stacking and six AA′ homobilayers, at two vacuum widths. Holes strengthen the interlayer bond yet soften both the breathing and the shear mode; the pCOHP at the valence-band edge explains the bond side.",
       [`${C.pairs.length} bilayers`, "breathing + shear", "vacuum 20 Å and 30 Å", "doped-charge profiles"]],
   ];
