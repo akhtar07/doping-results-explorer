@@ -297,6 +297,22 @@ for key, v in list(SH.items()) + list(S7["s"].items()):
 paper2["shear"] = {"rows": shear_rows}
 paper2["relax7"] = S7["relax"]
 paper2["allbonds"] = S7["allbonds"]
+# every intralayer shell (stage 8, job 103968); class needs both changes above
+# the 0.0036 eV resolution threshold, otherwise only the resolved side is named
+IN8 = load(H, "stage8_intra/intra.json")["systems"]
+
+
+def intra_cls(b):
+    if b["weak"]:
+        return "weak"
+    rh, re_ = abs(b["dh"]) >= 0.0036, abs(b["de"]) >= 0.0036
+    if rh and re_:
+        return "canonical" if b["dh"] < 0 < b["de"] else ("anti" if b["dh"] > 0 > b["de"] else "same")
+    return "holes only" if rh else ("electrons only" if re_ else "n.r.")
+
+
+paper2["intra"] = [dict(b, system=s, vac=int(vac[3:]), cls=intra_cls(b))
+                   for s, V in IN8.items() for vac, rows in V.items() for b in rows]
 paper2["charge"] = []
 for key, v in S7["charge"].items():
     s, vac, q = key.rsplit("_", 2)

@@ -758,6 +758,24 @@ function renderPaper2() {
   ], abRows(), r => r.cls === "weak" ? "contact" : "most");
   draws.push(() => tAB.update(abRows()));
 
+  /* ---- intralayer all-bonds */
+  const ib = block(root, "Every bond inside the layers",
+    `Every intralayer atom pair within 5.8 Å, grouped into shells. The metal–chalcogen bond is canonical in both layers of every bilayer and has the largest absolute response
+    (0.10–0.18 eV per bond under electrons). Metal–metal and the vertical X–X pair across the metal plane respond the other way (anti, or holes only where the electron change is unresolved). A change below the 0.0036 eV resolution
+    threshold is not given a sign; shells with |ICOHP₀| &lt; 0.1 eV are greyed out. Electron values depend on the vacuum width (switch above); hole values do not.`);
+  const ibRows = () => sel().flatMap(p => C.intra.filter(b => b.system === p && b.vac === F.vac).map(b => ({ ...b, stack: C.stack[p] })));
+  const tIB = table(ib.b, [
+    { k: "system", t: "Bilayer", l: 1, fmt: v => p2html(v) }, { k: "stack", t: "Stacking", l: 1 },
+    { k: "layer", t: "Layer", l: 1, fmt: v => v.replace(/(\d)/g, "<sub>$1</sub>") },
+    { k: "pair", t: "Pair", l: 1, fmt: v => v.replace("-", "–") }, { k: "d", t: "d (Å)", fmt: v => f(v, 3) }, { k: "n", t: "n" },
+    { k: "icohp", t: "ICOHP₀ (eV)", fmt: v => f(v, 4) },
+    { k: "de", t: "Δ e⁻ (eV)", fmt: v => sgn(v, 4), cls: r => r.de > 0 ? "weak" : "strong" },
+    { k: "dh", t: "Δ h⁺ (eV)", fmt: v => sgn(v, 4), cls: r => r.dh > 0 ? "weak" : "strong" },
+    { k: "rel_e", t: "e⁻ (%)", fmt: v => sgn(v, 1) }, { k: "rel_h", t: "h⁺ (%)", fmt: v => sgn(v, 1) },
+    { k: "cls", t: "Class", l: 1, fmt: v => v === "weak" ? `<span class="muted">weak</span>` : ["canonical", "anti", "same"].includes(v) ? `<span class="pill ${v}">${v}</span>` : `<span class="muted">${v}</span>` },
+  ], ibRows(), r => r.cls === "weak" ? "contact" : "most");
+  draws.push(() => tIB.update(ibRows()));
+
   /* ---- pCOHP at the band edge */
   const pk = block(root, "Why holes strengthen the interlayer bond: pCOHP at the valence-band edge",
     `−COHP(E) of the interlayer X···X contact for the undoped bilayer, with energies relative to the valence-band maximum. Negative values are antibonding.
